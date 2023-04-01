@@ -12,13 +12,13 @@ struct CommentView: View {
     let comment: Comment
 
     @EnvironmentObject var store: Store<AppState>
-    var state: CommentsState? { store.state.screenState(for: .comments(episodeId: comment.episodeId)) }
+    private var state: CommentsState? { store.state.screenState(for: .comments(episodeId: comment.episodeId)) }
 
     @ViewBuilder
     var avatarView: some View {
         if canPresentProfile {
             Button {
-                store.dispatch(ActiveScreensStateAction.showScreen(.userProfile(id: comment.userId, sourceCommentId: comment.id)))
+                store.dispatch(AppState.Action.showScreen(.userProfile(id: comment.userId, sourceCommentId: comment.id)))
             } label: {
                 Image(comment.avatar)
                     .resizable()
@@ -47,7 +47,7 @@ struct CommentView: View {
             get: { canPresentProfile && comment.userId == state?.presentedUserProfileId && comment.id == state?.selectedCommentId },
             set: {
                 guard !$0 else { return }
-                store.dispatch(ActiveScreensStateAction.dismissScreen(.userProfile(id: comment.userId, sourceCommentId: comment.id)))
+                store.dispatch(AppState.Action.dismissScreen(.userProfile(id: comment.userId, sourceCommentId: comment.id)))
             }
         )) {
             UserDetailsView(userId: comment.userId, sourceCommentId: comment.id)

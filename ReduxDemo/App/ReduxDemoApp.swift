@@ -8,10 +8,16 @@
 import SwiftUI
 
 let timelineRecorder = TimelineRecorderMiddleware()
+let tvShows = TvShowsMiddleware()
+let logger = LoggerMiddleware()
+let hotReloader = HotReloader()
 let store = Store(
     initial: AppState(),
     reducer: AppState.reducer,
-    middlewares: [Middlewares.tvShows, Middlewares.logger, timelineRecorder.middleware, HotReloader().middleware]
+    middlewares: [tvShows.middleware,
+                  logger.middleware,
+                  timelineRecorder.middleware,
+                  hotReloader.middleware]
 )
 
 struct AppView: View {

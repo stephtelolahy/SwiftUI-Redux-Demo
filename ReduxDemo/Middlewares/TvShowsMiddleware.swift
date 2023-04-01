@@ -8,20 +8,21 @@
 import Foundation
 import Combine
 
-extension Middlewares {
-    private static let tvShowsRepository = TvShowsRepository()
-    private static let usersRepository = UsersRepository()
-    private static var searchDebouncer = CurrentValueSubject<String, Never>("")
+final class TvShowsMiddleware {
 
-    static let tvShows: Middleware<AppState> = { state, action in
+    private let tvShowsRepository = TvShowsRepository()
+    private let usersRepository = UsersRepository()
+    private var searchDebouncer = CurrentValueSubject<String, Never>("")
+
+    func middleware(state: AppState, action: ActionProtocol) -> AnyPublisher<ActionProtocol, Never> {
         switch action {
-        case HomeStateAction.fetchUpcomingEpisodes:
+        case HomeState.Action.fetchUpcomingEpisodes:
             return tvShowsRepository
                 .fetchUpcomingEpisodes()
-                .map { HomeStateAction.didReceiveUpcomingEpisodes($0) }
+                .map { HomeState.Action.didReceiveUpcomingEpisodes($0) }
                 .ignoreError()
                 .eraseToAnyPublisher()
-        case HomeStateAction.filterEpisodes(let phrase):
+        case HomeState.Action.filterEpisodes(let phrase):
             // Cancelling previous request
             searchDebouncer.send(completion: .finished)
             searchDebouncer = CurrentValueSubject<String, Never>(phrase)
@@ -29,35 +30,35 @@ extension Middlewares {
             return searchDebouncer
                 .debounce(for: phrase == "" ? 0.0 : 0.5, scheduler: RunLoop.main)
                 .first()
-                .flatMap { tvShowsRepository.fetchUpcomingEpisodes(phrase: $0) }
-                .map { HomeStateAction.didReceiveUpcomingEpisodes($0) }
+                .flatMap { self.tvShowsRepository.fetchUpcomingEpisodes(phrase: $0) }
+                .map { HomeState.Action.didReceiveUpcomingEpisodes($0) }
                 .ignoreError()
                 .eraseToAnyPublisher()
 
-        case EpisodeDetailsStateAction.fetchEpisodeDetails(let id):
+        case EpisodeDetailsState.Action.fetchEpisodeDetails(let id):
             return tvShowsRepository
                 .fetchEpisodeDetails(episodeId: id)
-                .map { EpisodeDetailsStateAction.didReceiveEpisodeDetails($0) }
+                .map { EpisodeDetailsState.Action.didReceiveEpisodeDetails($0) }
                 .ignoreError()
                 .eraseToAnyPublisher()
-        case CommentsStateAction.fetchEpisodeComments(let id):
+        case CommentsState.Action.fetchEpisodeComments(let id):
             return tvShowsRepository
                 .fetchComments(episodeId: id)
-                .map { CommentsStateAction.didReceiveEpisodeComments($0, episodeId: id) }
+                .map { CommentsState.Action.didReceiveEpisodeComments($0, episodeId: id) }
                 .ignoreError()
                 .eraseToAnyPublisher()
-        case CommentsStateAction.postComment(let comment):
+        case CommentsState.Action.postComment(let comment):
             return tvShowsRepository
                 .postComment(comment)
                 .map { NoOpAction() }
                 .ignoreError()
                 .eraseToAnyPublisher()
-        case UserDetailsStateAction.fetchUserProfile(let userId):
+        case UserDetailsState.Action.fetchUserProfile(let userId):
             return Publishers.Zip(
                 usersRepository.fetchUser(id: userId).ignoreError(),
                 tvShowsRepository.fetchComments(userId: userId).ignoreError()
             )
-            .map { UserDetailsStateAction.didReceiveUserProfile(user: $0, comments: $1) }
+            .map { UserDetailsState.Action.didReceiveUserProfile(user: $0, comments: $1) }
             .eraseToAnyPublisher()
         default:
             return Empty().eraseToAnyPublisher()

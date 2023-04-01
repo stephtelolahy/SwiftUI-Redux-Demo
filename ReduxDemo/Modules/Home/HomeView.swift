@@ -9,7 +9,7 @@ import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject var store: Store<AppState>
-    var state: HomeState? { store.state.screenState(for: .home) }
+    private var state: HomeState? { store.state.screenState(for: .home) }
 
     var noEpisodesPlaceholder: some View {
         Text("Could not find episodes")
@@ -22,7 +22,7 @@ struct HomeView: View {
     var searchBar: some View {
         Text("")
             .searchable(
-                text: Binding(get: { state?.searchText ?? "" }, set: { store.dispatch(HomeStateAction.filterEpisodes(phrase: $0)) }),
+                text: Binding(get: { state?.searchText ?? "" }, set: { store.dispatch(HomeState.Action.filterEpisodes(phrase: $0)) }),
                 placement: .navigationBarDrawer(displayMode: .always)
             )
             .disableAutocorrection(true)
@@ -45,7 +45,7 @@ struct HomeView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("TV Shows")
         .addReplayButton()
-        .onLoad { store.dispatch(HomeStateAction.fetchUpcomingEpisodes) }
+        .onLoad { store.dispatch(HomeState.Action.fetchUpcomingEpisodes) }
     }
 
     private func createEpisodesList() -> some View {
@@ -62,7 +62,7 @@ struct HomeView: View {
     private func episodeRow(for episode: UpcomingEpisode) -> some View {
         Button(
             action: {
-                store.dispatch(ActiveScreensStateAction.showScreen(.episode(id: episode.id)))
+                store.dispatch(AppState.Action.showScreen(.episode(id: episode.id)))
             },
             label: {
                 UpcomingEpisodeView(episode: episode)
@@ -80,7 +80,7 @@ struct HomeView: View {
                 set: { isActive in
                     let currentValue = episode.id == state?.presentedEpisodeId
                     guard currentValue != isActive, !isActive else { return }
-                    store.dispatch(ActiveScreensStateAction.dismissScreen(.episode(id: episode.id)))
+                    store.dispatch(AppState.Action.dismissScreen(.episode(id: episode.id)))
                 }
             ),
             destination: { EpisodeDetailsLoadingView(episodeId: episode.id) },

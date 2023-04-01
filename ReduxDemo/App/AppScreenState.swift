@@ -2,28 +2,24 @@
 //  AppScreenState.swift
 //  ReduxDemo
 //
-//  Created by Wojciech Kulik on 28/11/2021.
+//  Created by Hugues Telolahy on 01/04/2023.
 //
 
 import Foundation
+
+enum AppScreen: Equatable {
+    case splashScreen
+    case home
+    case episode(id: UUID)
+    case userProfile(id: UUID, sourceCommentId: UUID)
+    case comments(episodeId: UUID)
+}
 
 enum AppScreenState: Codable {
     case splashScreen
     case home(HomeState)
     case episode(EpisodeDetailsState)
     case userProfile(UserDetailsState)
-}
-
-extension AppScreenState: CustomStringConvertible {
-    var description: String {
-        switch self {
-        case .splashScreen: return "splashScreen"
-        case .home(let state): return "home(isLoading=\(state.isLoading))"
-        case .episode(let state): return "episode(\(state.details?.title ?? "-"), isLoading=\(state.isLoading), isLoadingComments=\(state.comments.isLoading)"
-        case .userProfile(let state): return "userProfile(\(state.details?.name ?? "-"), isLoading=\(state.isLoading))"
-        }
-
-    }
 }
 
 extension AppScreenState {
@@ -33,7 +29,7 @@ extension AppScreenState {
         case (.home, .home): return true
         case (.episode(let state), .episode(let id)): return state.episodeId == id
         case (.userProfile(let state), .userProfile(let id, _)): return state.userId == id
-        case (.splashScreen, _), (.home, _), (.episode, _), (.userProfile, _): return false
+        default: return false
         }
     }
 
@@ -49,3 +45,4 @@ extension AppScreenState {
         !(lhs == rhs)
     }
 }
+
